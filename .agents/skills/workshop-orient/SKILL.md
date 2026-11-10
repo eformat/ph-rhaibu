@@ -261,7 +261,9 @@ Follow the shapes in the in-repo exemplars (`~/git/redhat-ai-inference/`,
   - `spec.title` = workshop title, `spec.learning_objectives` = distilled from the
     workshop + module requirements
   - `spec.modules[]` = one entry per module requirement (`id: module-NN`,
-    `title`, `duration_min`, `status: planned` — flip to `complete` during Act)
+    `title`, `duration_min`, `status: not_started` — flip to `complete` during Act;
+    use the template vocabulary (`not_started`), not `planned` — the PH Central API
+    renders `not_started` and downstream tooling expects it)
   - `spec.environment` = topology, OCP version, cluster type from the RAC design
   - Leave `jira_ticket`/`workflow_id` as `none`/`null` unless the project is registered
     with the PH Central API

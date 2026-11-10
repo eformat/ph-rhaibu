@@ -1,6 +1,6 @@
 # Workshop Common Rules
 
-**Version**: 1.3
+**Version**: 1.4
 
 Shared contracts for all workshop-* skills in the OODA pipeline. Every workshop skill
 MUST reference this file and follow these rules.
@@ -25,6 +25,14 @@ Skills MUST NOT produce, accept, or store sensitive information in any file.
 - Never ask users to paste credentials into the conversation
 - Never write credentials to generated files
 - Never echo back real credentials provided by the user
+
+**Secret mechanisms (DP-09 in `DEMO-PATTERNS.md`):** every credential path gets a
+named mechanism — `REPLACE_AT_APPLY` bootstrap values injected at the one-time apply;
+hook-Job-generated create-if-absent in-cluster secrets (never overwritten); the
+gitignore-negation idiom for per-cluster deployer values (`values-*.yaml` ignored,
+`!values-<slug>.yaml` placeholder template re-included). Content consumes
+`%PASSWORD%`/`injected-at-runtime` antora attributes; learner-chosen secrets ride env
+vars, never files; agent auth lives in `~/.config/`, outside the repo.
 
 ---
 
@@ -467,6 +475,68 @@ standalone should treat cross-references as optional enhancements.
 
 **Severity handling:**
 - N.1–N.3 are RECOMMENDED, not REQUIRED. Skip for workshops not part of a catalog.
+
+---
+
+## 12. Content ↔ QA Coupling (REQUIRED)
+
+The lab's QA is the lab's solve — mined from the live ph-* corpus (full catalog:
+`DEMO-PATTERNS.md`, rules DP-01…DP-05c). Summary contract:
+
+- **DP-01** Every `== Exercise` has a `=== Verify` with a literal expected value.
+- **DP-02** Negative tests included (HTTP 401; `oc auth can-i --as=… --as-group=…`
+  impersonation for RBAC — no persona passwords needed).
+- **DP-03** `qa-automation/e2e.yml` replays the student's commands; task names embed
+  the exercise (`"M5-Ex2 | Polling for RHCL CSV"`); header carries the contributor
+  contract (Purpose/Idempotency/Scope/Runtime/Retry/"Adding modules for your lab").
+- **DP-04** `healthcheck.yml` (provisioning-only, <30 s, exit codes) is a different
+  job from `e2e.yml` (learner replay, idempotent). Never blend.
+- **DP-05** Idempotent QA; honest skip ledger for uncovered exercises; an unreliable
+  check is downgraded to documented manual testing or deleted — never left flaky.
+- **DP-05a** Solve/validate placeholders in content ⇒ `runtime-automation/module-NN/`
+  playbooks on the SAME branch (the autoshift dead-button failure).
+- **DP-05c** QA plays calling `kubernetes.core.k8s` + raw `oc` set identity three ways
+  (module_defaults + KUBECONFIG + K8S_AUTH_KUBECONFIG).
+
+---
+
+## 13. Build Safety & Local Extensions (REQUIRED)
+
+- **DP-21** The RHDP content image ships only `@antora/cli` + `@antora/site-generator`.
+  npm Antora extensions are FATAL (empty site, every page 404s). All extensions are
+  local `content/lib/*.js`; the constraint is documented as a comment in `site.yml`
+  at the point of violation.
+- **DP-21** Local preview = `podman-compose.yaml` running the platform image
+  (same extension semantics as production). Guided/nookbag patterns cannot be
+  previewed this way — document the limit where relevant.
+- **DP-20** `content/antora.yml` is the single attribute inventory with canonical
+  placeholders (`%GUID%`, `%USER%`, `%PASSWORD%`, `cluster.example.com`). Versions are
+  never hardcoded in content. Runtime-injected `{openshift_*}` attributes are
+  showroom userdata — whitelist them in review, never "fix" them.
+- **DP-18** `role="execute"` only where running in the embedded terminal is correct;
+  anything for the learner's laptop/external console stays plain `[source,bash]` with
+  a sentence saying why there is no run button.
+
+---
+
+## 14. Multi-Variant & Frame Honesty (REQUIRED)
+
+- **DP-19** One repo → many variants: `ifeval` gates FRAGMENTS (manifest name, patch
+  step), never whole exercise sets (duplication = double maintenance + drift).
+  Divergence >~half a page ⇒ separate per-version module files. Manifest twins
+  (`-34`/`-35`) keep both versions buildable from main; environment differences are
+  directory choices (`clusterip/` vs `loadbalancer/`).
+- **DP-22** `publishing-house/worklog.yaml` is the drift journal: append dated entries
+  for known divergences; read it FIRST on existing repos. Empty `decisions/`/
+  `reviews/` scaffolds are not decision records.
+- **DP-23** The surviving decision mechanism is the WHY-comment at the point of use.
+- **DP-24** Update `spec.yaml development.*` + `spec.modules[].status` at phase end
+  (template vocabulary `not_started` → `complete`; scaffolded-dir ≠ authored;
+  e2e/healthCheck `complete` only after a live-cluster run).
+- **DP-25** Spec must not lie: before publish, every manifest path referenced in
+  `spec/modules/*.md` exists, module list matches shipped pages, frame artifacts
+  agree. Outlines are published as TechDocs — stale outlines are confidently wrong
+  in public.
 
 ---
 

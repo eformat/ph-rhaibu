@@ -15,6 +15,7 @@ Each workshop follows the OODA loop. Run the skills in order -- and loop back wh
 | **Orient** | `/workshop-orient` | Interview for requirements, create RAC artifacts (requirements, decisions, designs), synthesize `publishing-house/spec.yaml` + design + module outlines, validate |
 | **Do** | `/workshop-do` | Seed the repo from `rhdp-publishing-house-template`, scaffold `content/` + `automation/` + `qa-automation/`, `make build`, `helm template`, `decided validate` |
 | **Act** | `/workshop-act` | Deploy to a prelude cluster (`make deploy` via the showroom-deployer chart), Playwright browser tests, fix-and-test loop, PH-native publish |
+| **Patterns** | `/demo-patterns` | Codified better-demo rules (DP-01…DP-27) mined from the live ph-* corpus — phase checklists for Orient/Do/Act/Quality |
 | **Loop Back** | _team review_ | Gaps? Re-Observe. Scope change? Re-Orient. Content fix? Re-Do. All green? Ship it. |
 
 Standalone skills.
@@ -88,6 +89,7 @@ Main pipeline
 | `workshop-orient` | Plan the workshop with RAC artifacts + PH spec synthesis |
 | `workshop-do` | Scaffold content and automation into the workshop repo |
 | `workshop-act` | Deploy, test, and publish on a cluster |
+| `demo-patterns` | Apply codified better-demo patterns (DP-* rules) from the ph-* corpus mining |
 
 Standalone skills
 

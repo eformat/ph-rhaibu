@@ -42,8 +42,10 @@ requirements to determine what to capture rather than relying on a static list.
   repo, mapping each captured screenshot to the requirement criterion it satisfies.
 - Read **AsciiDoc content** from `~/git/ph-<slug>/content/modules/ROOT/pages/`
   to find existing `image::` references and surrounding context.
-- Use **openshift-4-21-expert** for OpenShift console navigation patterns.
-- Use **openshift-ai-3-3-expert** for RHOAI dashboard navigation patterns.
+- Use **openshift-4-22-expert** (or **openshift-5-expert** on 5.0 hosts) for OpenShift
+  console navigation patterns.
+- Use **openshift-ai-3-5-expert** (or **openshift-ai-3-6-expert** for EA) for RHOAI
+  dashboard navigation patterns.
 - After embedding screenshots, recommend running **verify-content** to
   validate the updated content against Red Hat quality standards.
 - See `../docs/WORKSHOP-COMMON-RULES.md` for shared AsciiDoc, image, security,

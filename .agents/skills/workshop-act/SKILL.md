@@ -40,12 +40,17 @@ criteria pass, then publish PH-native (repo gh-pages + PH tooling + catalog).
 
 - Use **playwright-cli** for all browser automation — opening pages, capturing
   screenshots, clicking, filling forms, assertions.
-- Use **openshift-4-21-expert** for cluster diagnostics when deployments fail.
-- Use **openshift-ai-3-3-expert** for RHOAI-specific diagnostics.
+- Use **openshift-4-22-expert** (4.22 hosts) or **openshift-5-expert** (5.0 hosts) for
+  cluster diagnostics when deployments fail.
+- Use **openshift-ai-3-5-expert** (GA) or **openshift-ai-3-6-expert** (EA only) for
+  RHOAI-specific diagnostics.
 - Read RAC requirements from `rac/requirements/` in the workshop repo for acceptance
   criteria to validate.
 - Use **workshop-screenshot** for capturing and embedding screenshots into AsciiDoc content.
 - Run **verify-content** as a quality gate after content and screenshots are ready.
+- Apply the **demo-patterns** catalog (`../docs/DEMO-PATTERNS.md`) at Act: DP-05a
+  placeholder⇒playbook gate, DP-03/04/05 QA contracts, DP-09 secrets mechanisms,
+  DP-24 final status ritual, DP-25/26 pre-publish sweeps.
 - See `../docs/WORKSHOP-COMMON-RULES.md` for shared AsciiDoc, image, security,
   and quality rules.
 - See `references/post-enrichment-audit.md` for structured

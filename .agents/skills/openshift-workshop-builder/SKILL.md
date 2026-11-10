@@ -26,8 +26,8 @@ In-repo exemplars (read, don't clone): `~/git/redhat-ai-inference/` (hybrid with
 
 ## Skill Coordination
 
-- Use the **OpenShift 4.21 Expert** skill for OpenShift Container Platform 4.21 flows, console paths, cluster-admin steps, and version-specific product behavior.
-- Use the **OpenShift AI 3.3 Expert** skill for Red Hat OpenShift AI 3.3 flows, workbenches, model serving, pipelines, and AI-specific administration.
+- Use the **OpenShift 4.22 Expert** skill (or **OpenShift 5 Expert** on 5.0 hosts) for OpenShift console flows, cluster-admin steps, and version-specific product behavior.
+- Use the **OpenShift AI 3.5 Expert** skill (or **OpenShift AI 3.6 Expert** for EA targets) for Red Hat OpenShift AI flows, workbenches, model serving, pipelines, and AI-specific administration.
 - Use the **Playwright CLI** skill to log in, navigate the console, capture screenshots, and save debugging artifacts.
 - See `../docs/WORKSHOP-COMMON-RULES.md` for shared AsciiDoc, image, security,
   and quality rules.

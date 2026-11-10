@@ -78,9 +78,14 @@ subagent for each workshop.
   after fixes are applied. Run it in headless mode (`ph_payload`) for each workshop.
 - Use **workshop-screenshot** patterns (at `../workshop-screenshot/`) for
   screenshot gap analysis and capture from a live cluster when one is available.
-- Use **openshift-ai-3-3-expert** for RHOAI domain knowledge when enriching
+- Use **openshift-ai-3-5-expert** (GA) or **openshift-ai-3-6-expert** (EA only) for
+  RHOAI domain knowledge when enriching
   content or validating commands.
-- Use **openshift-4-21-expert** for OpenShift-specific command validation.
+- Use **openshift-4-22-expert** (or **openshift-5-expert** on 5.0 hosts) for
+  OpenShift-specific command validation.
+- Apply the **demo-patterns** catalog (`../docs/DEMO-PATTERNS.md`) — Warning-severity
+  rules DP-10/11/12/13/26 are mechanically checkable in this phase; DP-25
+  (spec-vs-reality) and DP-26 (unused machinery) are sweep items.
 - Reference `../workshop-act/references/post-enrichment-audit.md` for the
   correctness/deduplication/depth audit methodology used in Phase 4.
 - The gold-standard workshop at `~/git/ph-deploy-configure-rhoai/` or
@@ -483,7 +488,8 @@ CONCRETE replacements:
   READY shows `1/1`")
 - After `oc create`: show `oc get <resource> -o name` and expected output
 
-Use the **openshift-ai-3-3-expert** skill for domain-accurate expected outputs.
+Use the **openshift-ai-3-5-expert** skill (or **openshift-ai-3-6-expert** for EA
+targets) for domain-accurate expected outputs.
 
 **4d. YAML callouts (max 5 per block):**
 

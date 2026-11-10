@@ -71,6 +71,9 @@ state. Pipeline changes are developed in branches of this repo.
 ## Skill Coordination
 
 - **openshift-workshop-builder** — handles Antora/showroom content scaffolding (called by workshop-do)
+- **demo-patterns** — codified better-demo patterns (DP-01…DP-27) mined from the live
+  ph-* corpus (2026-11-10); catalog at `.agents/skills/docs/DEMO-PATTERNS.md`; each
+  pipeline skill applies its phase checklist; also adds §12–§14 of WORKSHOP-COMMON-RULES
 - **playwright-cli** — browser automation for testing (called by workshop-act)
 - **openshift-4-22-expert** — OpenShift 4.22 console flows and cluster admin steps
 - **openshift-5-expert** — OpenShift 5.0 flows: OLM v1 extensions, MCP server, PQC, virtualization; supersedes 4.x assumptions on 5.0 hosts

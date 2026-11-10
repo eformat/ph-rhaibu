@@ -38,8 +38,14 @@ Scaffold content, automation, and QA into the workshop's single publishing-house
 - **Delegate content scaffolding** to the `openshift-workshop-builder` skill. It owns
   the Antora/showroom structure, file templates, AsciiDoc patterns, and build process.
   This skill orchestrates it with the right parameters, then adds workshop-specific content.
-- Use the **OpenShift 4.21 Expert** skill for OpenShift-specific lab steps.
-- Use the **OpenShift AI 3.3 Expert** skill for RHOAI-specific lab steps.
+- Use the **OpenShift 4.22 Expert** skill (or **OpenShift 5 Expert** on 5.0 hosts) for
+  OpenShift-specific lab steps.
+- Use the **OpenShift AI 3.5 Expert** skill (or **OpenShift AI 3.6 Expert** for EA
+  targets) for RHOAI-specific lab steps.
+- Apply the **demo-patterns** catalog (`../docs/DEMO-PATTERNS.md`) while scaffolding:
+  DP-13 module skeleton, DP-10 expected output, DP-01/02 Verify + negative tests,
+  DP-12 callout ledger, DP-19 ifeval fragments, DP-20 attribute inventory, DP-21
+  local extensions only, DP-06/07/08 automation layering.
 - Reference the in-repo exemplars for the target shape (read, don't clone):
   - `~/git/redhat-ai-inference/` — hybrid repo with `rac/` + PH frame
   - `~/git/ph-operations-rhoai/` — `automation/gitops/cluster/*` two-layer pattern +
