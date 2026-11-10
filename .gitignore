@@ -1,0 +1,22 @@
+# build artifacts
+node_modules/
+www/
+*.egg-info/
+__pycache__/
+*.pyc
+.cache/
+
+# local tooling state
+.claude/
+.playwright-cli/
+.venv/
+.vscode/
+screenshots/
+.decided/
+.rac/
+
+# env / secrets
+.env
+.env.*
+*.log
+*.tmp

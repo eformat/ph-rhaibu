@@ -1,0 +1,378 @@
+---
+name: workshop-screenshot
+description: >
+  Adaptive screenshot capture helper for workshop content. Reads AsciiDoc pages and
+  RAC requirements to determine which screenshots are needed, captures them via
+  playwright-cli from a live cluster, embeds image:: references into .adoc pages,
+  and rebuilds. CLI outputs are captured as terminal-styled renders of the real
+  command output (see references/term.py); browser UI as live screenshots. Use when
+  someone wants to "capture screenshots", "take screenshots", "update screenshots",
+  "screenshot the workshop", "render terminal shots", "recapture images", or "refresh
+  workshop images". Called by workshop-act during acceptance testing and optionally
+  by workshop-do when a cluster is available. Not intended for standalone use outside
+  the OODA pipeline.
+triggers:
+  keywords:
+    - "capture screenshots"
+    - "workshop screenshots"
+    - "take screenshots"
+    - "recapture images"
+    - "refresh screenshots"
+    - "screenshot workshop"
+    - "terminal screenshots"
+    - "render CLI output"
+    - "terminal shots"
+  matchMode: any
+enabled: true
+---
+
+# Workshop Screenshot
+
+Capture screenshots from a live OpenShift/RHOAI cluster and embed them into workshop
+AsciiDoc content. This skill is adaptive — it reads existing content and RAC
+requirements to determine what to capture rather than relying on a static list.
+
+## Skill coordination
+
+- Use **playwright-cli** for all browser automation — session management, navigation,
+  waiting, and screenshot capture.
+- Read **RAC requirements** from `rac/requirements/` in the workshop repo to identify
+  acceptance criteria that imply visual verification.
+- Write **RAC evidence** to `rac/assets/screenshot-evidence-<slug>.md` in the workshop
+  repo, mapping each captured screenshot to the requirement criterion it satisfies.
+- Read **AsciiDoc content** from `~/git/ph-<slug>/content/modules/ROOT/pages/`
+  to find existing `image::` references and surrounding context.
+- Use **openshift-4-21-expert** for OpenShift console navigation patterns.
+- Use **openshift-ai-3-3-expert** for RHOAI dashboard navigation patterns.
+- After embedding screenshots, recommend running **verify-content** to
+  validate the updated content against Red Hat quality standards.
+- See `../docs/WORKSHOP-COMMON-RULES.md` for shared AsciiDoc, image, security,
+  and quality rules.
+- Reference `references/capture-patterns.md` for reusable
+  playwright-cli patterns for common OpenShift/RHOAI screenshot scenarios,
+  including the **terminal-rendered CLI shots** pipeline
+  (`references/term.py`).
+
+## Prerequisites
+
+Check these before starting. If any are missing, print what's needed and stop.
+
+- `playwright-cli` available — `playwright-cli --version`
+- Workshop repo exists at `~/git/ph-<slug>/` with `content/`
+- `KUBECONFIG` is set and `oc whoami` succeeds
+- Target cluster routes are accessible (test with `curl -s -o /dev/null -w "%{http_code}" https://<route>`)
+
+Optional:
+- `rac/` corpus in the workshop repo (enables gap analysis mode)
+- Deployer values at `~/git/ph-<slug>/automation/showroom-deployer/values-<slug>.yaml`
+  (provides deployer.domain, credentials)
+
+## Workflow
+
+### 0. Resolve the workshop repo
+
+Accept a workshop slug as argument. If none provided, discover existing workshop repos:
+
+```bash
+ls -d ~/git/ph-*/rac/ 2>/dev/null
+```
+
+If exactly one exists, use it. If multiple exist, list them and ask the user to
+choose. Derive the slug from the directory name.
+
+Locate the pieces inside `~/git/ph-<slug>/`:
+- `content/` (required — Antora content)
+- `rac/` (optional — enables gap analysis)
+- `automation/showroom-deployer/values-<slug>.yaml` (optional — provides cluster config values)
+
+### 1. Analyze what to capture
+
+Read the deployer values (if the values file exists) to extract:
+- `deployer.domain` — cluster apps domain
+- `showroom.user` / `showroom.password` — login credentials
+- `showroom.projectName` / `showroom.workbenchName` — workshop-specific values
+
+#### Mode A: From AsciiDoc (default)
+
+Scan all `.adoc` files under `content/modules/ROOT/pages/`:
+
+```bash
+grep -rn 'image::' ~/git/ph-<slug>/content/modules/ROOT/pages/
+```
+
+For each `image::filename.png[alt,link=self,window=blank,width=700]` reference, extract:
+- **filename** — the screenshot to capture (e.g., `06-workbench-creation-form.png`)
+- **page** — which `.adoc` file contains the reference
+- **context** — the surrounding AsciiDoc text (2-3 lines before the image reference)
+  to understand what the screenshot should show
+- **hints** — button names, page titles, form field values mentioned in the
+  surrounding exercise instructions
+
+Build a shot list ordered by page sequence (use the `NN-` filename prefix for
+ordering) and by position within each page.
+
+#### Mode B: From RAC requirements (gap analysis)
+
+If the RAC repo exists, also read requirements from
+`rac/requirements/`:
+
+- Find acceptance criteria containing visual verification language:
+  `MUST verify`, `MUST see`, `SHOULD observe`, `MUST open`, `MUST click`
+- Each implies a screenshot opportunity
+- Cross-reference with the shot list from Mode A
+- Any requirement criterion without a matching `image::` reference is a **gap**
+- Report gaps and offer to add screenshots for them
+
+### 2. Build the shot list
+
+For each screenshot to capture, determine:
+
+| Field | Description |
+|-------|-------------|
+| `name` | Deterministic filename (e.g., `06-workbench-creation-form.png`) |
+| `page` | Source `.adoc` page |
+| `context` | What the screenshot should show (from AsciiDoc text) |
+| `url` | Target URL (derived from `deployer.domain` or `{attribute}` references) |
+| `preconditions` | Required state (logged in, project exists, on specific page) |
+| `actions` | Playwright steps to reach the right state |
+
+Group shots by navigation flow to minimize redundant steps:
+- **Login flow** — shots requiring the Keycloak/OpenShift login page
+- **RHOAI dashboard flow** — shots on the RHOAI dashboard (project list, project overview)
+- **Workbench flow** — shots during workbench creation and startup
+- **Application flow** — shots inside the running workbench (JupyterLab, etc.)
+
+Order within each flow follows the natural user journey — do not jump back and forth.
+
+### 3. Capture screenshots
+
+Open a playwright-cli session and capture each shot in sequence:
+
+```
+playwright-cli -s=workshop-screenshots open <login_url>
+```
+
+For each shot in the ordered list:
+
+1. **Navigate** to the required state using the `actions` from the shot list
+2. **Wait** for the expected content to render:
+   - Use `waitForLoadState('networkidle')` for page transitions
+   - Use `waitForSelector` or `getByRole`/`getByText` for specific elements
+   - Wait for animations to settle (500ms pause after dynamic content loads)
+3. **Capture** the screenshot:
+   ```
+   playwright-cli screenshot ~/git/ph-<slug>/content/modules/ROOT/assets/images/<filename>
+   ```
+4. **Verify the capture shows the expected state** — file size alone proves nothing
+   (a 404 page, an OAuth error, or a welcome-tour modal over the wrong page all
+   exceed 10KB):
+   a. **Check the final URL and page title** after navigation. A redirect to an
+      OAuth error page, a console/dashboard 404, or a different nav target than the
+      shot's `context` describes is a FAILED capture — retry from the correct state.
+   b. **Re-open the captured file and visually confirm** it shows the state the
+      shot's `context` describes: the expected page, the populated state, the
+      correct selection. Reject captures showing: 404/error pages, OAuth
+      error JSON, welcome tour modals, loading spinners, or empty states that
+      contradict the context — re-capture from the correct state or mark the shot
+      as failed. Do not embed a rejected capture.
+
+Between flow groups, save and restore auth state:
+```
+playwright-cli state-save workshop-auth
+playwright-cli state-load workshop-auth
+```
+
+If a capture fails (element not found, navigation error, timeout):
+- Log the failure with the shot name and error
+- Skip to the next shot in the same flow
+- Do not abort the entire capture run
+
+#### Terminal-rendered CLI shots
+
+For exercise steps that show a CLI command and its expected output, do not
+screenshot a live terminal — render the REAL captured output as a
+terminal-styled HTML page instead (dark theme, traffic-light dots, green
+`$ command` line). The text is the real output of the real command on the
+live cluster; only the chrome is synthesized. Hand-written or "expected"
+output text is fabrication — do not do it.
+
+Use a terminal render when the step says "run this command" or shows expected
+output, when the output is long or wide (live terminal screenshots would be
+illegible), and for consistency across a CLI-heavy module. Browser UI shots
+still use live captures.
+
+Pipeline (run the real command → render → serve → capture the `#term` box):
+
+```bash
+# 1. real command, real output
+oc get datasciencecluster -A > /tmp/term/out02.txt 2>&1
+# 2. render (width in px — wide enough that no line wraps)
+python3 references/term.py "oc get datasciencecluster -A" \
+  /tmp/term/out02.txt /tmp/term/02.html 900
+# 3. serve
+python3 -m http.server 18921 -d /tmp/term &
+```
+
+```
+# 4. capture the terminal box only
+playwright-cli -s=workshop-screenshots open http://localhost:18921/02.html
+playwright-cli -s=workshop-screenshots screenshot "#term" \
+  --filename ~/git/ph-<slug>/content/modules/ROOT/assets/images/02-dsc-ready.png
+```
+
+Redact secrets from rendered text — API keys as short prefixes only
+(`sk-oai-1ZJqw...`), never full values, no passwords or tokens. Verify the
+render like any capture: open the PNG and confirm the text matches the real
+command output. Full styling, width, and redaction details:
+`references/capture-patterns.md` → "Terminal-Rendered CLI Shots".
+
+### 4. Embed into AsciiDoc
+
+For each successfully captured screenshot:
+
+- **Existing reference**: if `image::filename.png[alt,link=self,window=blank,width=700]` already exists in the
+  `.adoc` page, the file replacement is sufficient — no AsciiDoc edit needed
+- **New screenshot** (from gap analysis): insert an `image::` reference at the
+  appropriate location:
+  - Find the exercise step or verification block that corresponds to the screenshot
+  - Insert `image::filename.png[Description,link=self,window=blank,width=700]` on the line after the instruction
+    text, preceded by `+` for AsciiDoc list continuation
+  - Use the context from the RAC requirement for the alt text
+
+### 5. Rebuild and verify
+
+```bash
+cd ~/git/ph-<slug>
+make build
+```
+
+After building, verify no broken image references:
+
+```bash
+grep -rn 'image::' content/modules/ROOT/pages/ | while read line; do
+  file=$(echo "$line" | sed 's/.*image::\([^[]*\).*/\1/')
+  if [ ! -f "content/modules/ROOT/assets/images/$file" ]; then
+    echo "MISSING: $file"
+  fi
+done
+```
+
+### 6. Write RAC screenshot evidence
+
+If the rac/ corpus exists in the workshop repo, write a screenshot evidence artifact
+to `~/git/ph-<slug>/rac/assets/screenshot-evidence-<slug>.md`.
+
+This artifact maps each captured screenshot to the RAC requirement criterion it
+satisfies, creating a verifiable evidence trail between visual captures and acceptance
+criteria.
+
+```markdown
+---
+schema_version: 1
+type: asset
+---
+# Screenshot Evidence: <Workshop Title>
+
+## Capture Summary
+
+- **Date:** <capture date>
+- **Cluster:** <cluster domain from deployer.domain>
+- **Product version:** <RHOAI version from cluster>
+- **Captured:** N/M shots
+- **Failed:** N shots
+
+## Evidence Map
+
+| Screenshot | Page | Requirement | Criterion | Status |
+|------------|------|-------------|-----------|--------|
+| 01-keycloak-login.png | getting-connected.adoc | RHAIBU-KXYZFK17N4M2 | Login to OpenShift | captured |
+| 02-rhoai-dashboard-home.png | getting-connected.adoc | RHAIBU-KXYZGTZVSVY9 | REQ-001 | captured |
+| 06-workbench-creation-form.png | 03-module-02-...adoc | RHAIBU-KXYZGWA6G88A | REQ-001 | captured |
+
+## Uncovered Criteria
+
+Requirements with visual verification criteria but no matching screenshot:
+
+- RHAIBU-KXYZGWA6G88A REQ-007: "SHOULD understand the difference..." — not screenshottable
+```
+
+The evidence map is built by matching each screenshot's AsciiDoc context back to the
+RAC requirement criterion it illustrates. When a criterion uses `MUST verify`,
+`MUST see`, or `MUST open` language, the screenshot that appears adjacent to that
+instruction in the AsciiDoc is the evidence.
+
+List uncovered criteria separately — these are either not screenshottable (conceptual
+understanding) or gaps that need additional captures.
+
+### 7. Report
+
+Print a summary table:
+
+```
+=== Screenshot Capture Report ===
+
+Filename                            | Page                        | Status   | Size
+------------------------------------+-----------------------------+----------+-------
+01-keycloak-login.png               | getting-connected.adoc      | captured | 142KB
+02-rhoai-dashboard-home.png         | getting-connected.adoc      | captured | 198KB
+06-workbench-creation-form.png      | 03-module-02-...adoc        | captured | 165KB
+...
+
+Captured: 14/14
+Failed: 0
+New embeddings added: 0
+RAC evidence: ~/git/ph-<slug>/rac/assets/screenshot-evidence-<slug>.md
+Build status: PASS
+```
+
+If any shots were captured from gap analysis, list the new `image::` references added.
+
+Clean up the playwright session:
+
+```
+playwright-cli -s=workshop-screenshots close
+```
+
+## Guardrails
+
+- Never fabricate screenshots. Only capture from live, running systems. If the cluster
+  is not ready or a page does not load, mark the shot as failed — do not use placeholder
+  images. Terminal renders (see step 3) synthesize only the chrome (window bar,
+  colors) around the REAL captured output — the text itself must come from the live
+  cluster. Rendering invented or "expected" output text is fabrication.
+- **Never embed an unverified capture.** Every screenshot is reviewed before embedding
+  (step 4): final URL/title checked, pixels confirmed against the shot's `context`.
+  A capture of a 404, an auth error, a welcome modal, a loading state, or the wrong
+  page is worse than no image — it teaches the wrong thing.
+- Every workshop with embedded images needs a **content-match audit** (see
+  `quality-enrichment` Phase 2 step 7): open each PNG and verify it shows what the
+  alt-text and surrounding step describe. Filename and alt-text describe intent —
+  only the pixels prove the state.
+- Use deterministic filenames so re-captures replace existing files without requiring
+  AsciiDoc edits.
+- Save screenshots directly to the workshop repo's `content/modules/ROOT/assets/images/` directory.
+- Clean up playwright sessions when capture is complete.
+- Do not modify RAC requirements or decisions. If a requirement's acceptance criteria
+  cannot be screenshotted, report it as a gap in the evidence artifact. Only write to
+  `rac/assets/` — never to `rac/requirements/`, `rac/decisions/`, or `rac/designs/`.
+- Do not create new AsciiDoc pages. Only embed screenshots into existing pages.
+- Do not store auth state, passwords, or tokens in any committed file. Use playwright
+  session state only.
+- Redact or avoid capturing sensitive values (tokens, pull secrets, internal hostnames)
+  in screenshots. Use `{attribute}` substitution in AsciiDoc, not hardcoded values.
+
+## Out of scope
+
+- Writing workshop content or creating new AsciiDoc pages — use `workshop-do`
+- Deploying the workshop to a cluster — use `workshop-act`
+- Planning which modules need screenshots — use `workshop-orient`
+- Analyzing demo applications — use `workshop-observe`
+- Video recording or screen recording
+- Screenshot editing, cropping, or annotation of captured images (terminal-rendered
+  CLI shots of real output are in scope — see step 3 and `references/term.py`)
+
+## Related Skills
+
+- `/workshop-act` — Deploy and test the workshop end-to-end
+- `/workshop-do` — Scaffold content and infrastructure from RAC requirements
+- `/verify-content` — Validate content against Red Hat quality standards
