@@ -15,7 +15,7 @@ triggers:
     - "scc"
     - "ingresscontroller"
   matchMode: any
-enabled: true
+enabled: false
 ---
 
 # OpenShift 4.21 Expert

@@ -72,8 +72,11 @@ state. Pipeline changes are developed in branches of this repo.
 
 - **openshift-workshop-builder** — handles Antora/showroom content scaffolding (called by workshop-do)
 - **playwright-cli** — browser automation for testing (called by workshop-act)
-- **openshift-4-21-expert** — OpenShift console flows and cluster admin steps
-- **openshift-ai-3-3-expert** — RHOAI workbenches, model serving, pipelines
+- **openshift-4-22-expert** — OpenShift 4.22 console flows and cluster admin steps
+- **openshift-5-expert** — OpenShift 5.0 flows: OLM v1 extensions, MCP server, PQC, virtualization; supersedes 4.x assumptions on 5.0 hosts
+- **openshift-ai-3-5-expert** — RHOAI 3.5 GA: workbenches, model serving (KServe/LLMInferenceService/llm-d/MaaS), model catalog, pipelines
+- **openshift-ai-3-6-expert** — RHOAI 3.6 Early Access only (release notes under the 3.5 docs tree); not for production guidance
+- `openshift-4-21-expert` and `openshift-ai-3-3-expert` are **disabled** (kept for reference; superseded by the 4.22/5.0 and 3.5/3.6 skills)
 - **verify-content** (`/verify-content`) — validates showroom content against Red Hat quality standards; quality gate in workshop-act. Vendored from the RHDP skills marketplace and registered as a slash command.
 - **catalog-builder** (`/catalog-builder`) — builds an RHDP AgnosticV catalog entry at publish time. Vendored from the RHDP skills marketplace and registered as a slash command.
 - **quality-enrichment** (`/quality-enrichment`) — audits and uplifts bulk-scaffolded workshops in the ralf-wiggum monorepo. Validates RAC coverage, audits screenshots, enriches with code from companion repos (`red-hat-ai-examples`, `trustyai-llm-demo`, etc.), and fixes content quality defects. Operates post-enrichment, before Act.

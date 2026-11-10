@@ -18,7 +18,7 @@ triggers:
     - "vllm"
     - "modelmesh"
   matchMode: any
-enabled: true
+enabled: false
 ---
 
 # OpenShift AI 3.3 Expert
